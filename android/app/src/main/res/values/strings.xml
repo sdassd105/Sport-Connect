@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Sport Connect</string>
+    <string name="title_activity_main">Sport Connect</string>
+    <string name="package_name">com.sportconnect.app</string>
+    <string name="custom_url_scheme">com.sportconnect.app</string>
+</resources>
