@@ -1,11 +1,20 @@
-﻿import Layout from "@/components/Layout";
+import Layout from "@/components/Layout";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Users, Send, Mail, Check, X, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface Player {
   id: number;
@@ -61,8 +70,11 @@ function mapSkillLabel(level?: string | null) {
 
 export default function TM() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState(user?.role === "treinador" ? "recrutamento" : "candidaturas");
+  const [activeTab, setActiveTab] = useState(
+    user?.role === "treinador" ? "recrutamento" : "candidaturas"
+  );
   const [selectedTeam, setSelectedTeam] = useState<number | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [candidatureMessage, setCandidatureMessage] = useState("");
   const [showCreateVacancy, setShowCreateVacancy] = useState(false);
   const [isSavingVacancy, setIsSavingVacancy] = useState(false);
@@ -76,14 +88,57 @@ export default function TM() {
   });
 
   const [playersSeekingTeams] = useState<Player[]>([
-    { id: 1, name: "Lucas 'Spider'", sport: "Basquete", position: "Armador", level: "Avancado", age: 22, city: "Lisboa", email: "lucas@email.com" },
-    { id: 2, name: "Ana Volley", sport: "Volei", position: "Levantadora", level: "Intermedio", age: 26, city: "Porto", email: "ana@email.com" },
-    { id: 3, name: "Marcos Gol", sport: "Futebol", position: "Guarda-redes", level: "Profissional", age: 29, city: "Setubal", email: "marcos@email.com" },
+    {
+      id: 1,
+      name: "Lucas 'Spider'",
+      sport: "Basquete",
+      position: "Armador",
+      level: "Avancado",
+      age: 22,
+      city: "Lisboa",
+      email: "lucas@email.com",
+    },
+    {
+      id: 2,
+      name: "Ana Volley",
+      sport: "Volei",
+      position: "Levantadora",
+      level: "Intermedio",
+      age: 26,
+      city: "Porto",
+      email: "ana@email.com",
+    },
+    {
+      id: 3,
+      name: "Marcos Gol",
+      sport: "Futebol",
+      position: "Guarda-redes",
+      level: "Profissional",
+      age: 29,
+      city: "Setubal",
+      email: "marcos@email.com",
+    },
   ]);
 
   const [receivedApplications, setReceivedApplications] = useState<Application[]>([
-    { id: 1, name: "Lucas 'Spider'", sport: "Basquete", position: "Armador", message: "Gostaria de fazer um teste na equipa!", status: "pendente", email: "lucas@email.com" },
-    { id: 2, name: "Marcos Gol", sport: "Futebol", position: "Guarda-redes", message: "Tenho experiencia em torneios regionais.", status: "pendente", email: "marcos@email.com" },
+    {
+      id: 1,
+      name: "Lucas 'Spider'",
+      sport: "Basquete",
+      position: "Armador",
+      message: "Gostaria de fazer um teste na equipa!",
+      status: "pendente",
+      email: "lucas@email.com",
+    },
+    {
+      id: 2,
+      name: "Marcos Gol",
+      sport: "Futebol",
+      position: "Guarda-redes",
+      message: "Tenho experiencia em torneios regionais.",
+      status: "pendente",
+      email: "marcos@email.com",
+    },
   ]);
 
   const [myApplications, setMyApplications] = useState<Application[]>([]);
@@ -134,7 +189,7 @@ export default function TM() {
     if (!user) return;
 
     if (!vacancyForm.position || !vacancyForm.city || !vacancyForm.description) {
-      alert("Por favor, preencha posicao, cidade e descricao da vaga.");
+      toast.error("Preencha posicao, cidade e descricao da vaga.");
       return;
     }
 
@@ -174,10 +229,11 @@ export default function TM() {
         description: "",
       });
       setShowCreateVacancy(false);
-      alert("Anuncio criado com sucesso e salvo na base de dados.");
+      toast.success("Anuncio criado com sucesso e salvo na base de dados.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Nao foi possivel criar o anuncio.";
-      alert(message);
+      const message =
+        error instanceof Error ? error.message : "Nao foi possivel criar o anuncio.";
+      toast.error(message);
     } finally {
       setIsSavingVacancy(false);
     }
@@ -185,7 +241,7 @@ export default function TM() {
 
   const handleSendCandidature = (teamId: number) => {
     if (!candidatureMessage.trim()) {
-      alert("Por favor, escreva uma mensagem de candidatura.");
+      toast.error("Escreva uma mensagem de candidatura.");
       return;
     }
 
@@ -202,8 +258,8 @@ export default function TM() {
       email: team.email,
     };
 
-    setMyApplications([...myApplications, newApp]);
-    alert(`Candidatura enviada para ${team.name}.`);
+    setMyApplications((current) => [...current, newApp]);
+    toast.success(`Candidatura enviada para ${team.name}.`);
     setCandidatureMessage("");
     setSelectedTeam(null);
   };
@@ -212,28 +268,26 @@ export default function TM() {
     setReceivedApplications((current) =>
       current.map((app) => (app.id === appId ? { ...app, status: "aceite" } : app))
     );
-    alert("Candidatura aceite com sucesso.");
+    toast.success("Candidatura aceite com sucesso.");
   };
 
   const handleRejectApplication = (appId: number) => {
     setReceivedApplications((current) =>
       current.map((app) => (app.id === appId ? { ...app, status: "rejeitado" } : app))
     );
-    alert("Candidatura rejeitada.");
+    toast.success("Candidatura rejeitada.");
   };
 
   const handleViewProfile = (playerId: number) => {
     const player = playersSeekingTeams.find((item) => item.id === playerId);
     if (!player) return;
 
-    alert(
-      `Perfil de ${player.name}\n\nDesporto: ${player.sport}\nPosicao: ${player.position}\nNivel: ${player.level}\nIdade: ${player.age}\nCidade: ${player.city}\nE-mail: ${player.email}`
-    );
+    setSelectedPlayer(player);
   };
 
   const handleContactViaEmail = (email: string) => {
     if (!email) {
-      alert("Contacto de e-mail ainda nao configurado para este anuncio.");
+      toast.error("Contacto de e-mail ainda nao configurado para este anuncio.");
       return;
     }
 
@@ -245,7 +299,7 @@ export default function TM() {
       <div className="space-y-8">
         <div className="rounded-lg border-l-8 border-primary bg-card p-8 shadow-lg">
           <h1 className="mb-2 text-4xl font-display font-bold uppercase text-foreground">
-            T&M <span className="text-primary">Recrutamento</span>
+            T&amp;M <span className="text-primary">Recrutamento</span>
           </h1>
           <p className="max-w-2xl text-lg text-muted-foreground">
             A ligacao perfeita entre talento e oportunidade. Encontre a sua proxima equipa ou o jogador que falta para a sua equipa.
@@ -396,14 +450,35 @@ export default function TM() {
               <div className="grid gap-4">
                 {receivedApplications.length > 0 ? (
                   receivedApplications.map((app) => (
-                    <Card key={app.id} className={app.status === "aceite" ? "border-green-500" : app.status === "rejeitado" ? "border-red-500" : ""}>
+                    <Card
+                      key={app.id}
+                      className={
+                        app.status === "aceite"
+                          ? "border-green-500"
+                          : app.status === "rejeitado"
+                            ? "border-red-500"
+                            : ""
+                      }
+                    >
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="mb-2 flex items-center gap-2">
                               <h3 className="text-lg font-display font-bold">{app.name}</h3>
-                              <span className={`rounded px-2 py-1 text-xs font-bold ${app.status === "aceite" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : app.status === "rejeitado" ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"}`}>
-                                {app.status === "aceite" ? "Aceite" : app.status === "rejeitado" ? "Rejeitado" : "Pendente"}
+                              <span
+                                className={`rounded px-2 py-1 text-xs font-bold ${
+                                  app.status === "aceite"
+                                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                    : app.status === "rejeitado"
+                                      ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                                      : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                }`}
+                              >
+                                {app.status === "aceite"
+                                  ? "Aceite"
+                                  : app.status === "rejeitado"
+                                    ? "Rejeitado"
+                                    : "Pendente"}
                               </span>
                             </div>
                             <div className="space-y-1 text-sm text-muted-foreground">
@@ -428,7 +503,9 @@ export default function TM() {
                   ))
                 ) : (
                   <Card>
-                    <CardContent className="p-6 text-center text-muted-foreground">Nenhuma candidatura recebida.</CardContent>
+                    <CardContent className="p-6 text-center text-muted-foreground">
+                      Nenhuma candidatura recebida.
+                    </CardContent>
                   </Card>
                 )}
               </div>
@@ -480,7 +557,9 @@ export default function TM() {
                   ))
                 ) : (
                   <Card>
-                    <CardContent className="p-6 text-center text-muted-foreground">Ainda nao existem vagas publicadas.</CardContent>
+                    <CardContent className="p-6 text-center text-muted-foreground">
+                      Ainda nao existem vagas publicadas.
+                    </CardContent>
                   </Card>
                 )}
               </div>
@@ -493,14 +572,35 @@ export default function TM() {
               <div className="grid gap-4">
                 {myApplications.length > 0 ? (
                   myApplications.map((app) => (
-                    <Card key={app.id} className={app.status === "aceite" ? "border-green-500" : app.status === "rejeitado" ? "border-red-500" : ""}>
+                    <Card
+                      key={app.id}
+                      className={
+                        app.status === "aceite"
+                          ? "border-green-500"
+                          : app.status === "rejeitado"
+                            ? "border-red-500"
+                            : ""
+                      }
+                    >
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="mb-2 flex items-center gap-2">
                               <h3 className="text-lg font-display font-bold">{app.name}</h3>
-                              <span className={`rounded px-2 py-1 text-xs font-bold ${app.status === "aceite" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : app.status === "rejeitado" ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"}`}>
-                                {app.status === "aceite" ? "Aceite" : app.status === "rejeitado" ? "Rejeitado" : "Pendente"}
+                              <span
+                                className={`rounded px-2 py-1 text-xs font-bold ${
+                                  app.status === "aceite"
+                                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                    : app.status === "rejeitado"
+                                      ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                                      : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                }`}
+                              >
+                                {app.status === "aceite"
+                                  ? "Aceite"
+                                  : app.status === "rejeitado"
+                                    ? "Rejeitado"
+                                    : "Pendente"}
                               </span>
                             </div>
                             <div className="space-y-1 text-sm text-muted-foreground">
@@ -517,13 +617,71 @@ export default function TM() {
                   ))
                 ) : (
                   <Card>
-                    <CardContent className="p-6 text-center text-muted-foreground">Ainda nao enviou nenhuma candidatura.</CardContent>
+                    <CardContent className="p-6 text-center text-muted-foreground">
+                      Ainda nao enviou nenhuma candidatura.
+                    </CardContent>
                   </Card>
                 )}
               </div>
             </TabsContent>
           )}
         </Tabs>
+
+        <Dialog
+          open={!!selectedPlayer}
+          onOpenChange={(open) => {
+            if (!open) setSelectedPlayer(null);
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{selectedPlayer?.name}</DialogTitle>
+              <DialogDescription>
+                Perfil do jogador integrado no T&amp;M.
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedPlayer && (
+              <div className="grid gap-3 rounded-lg border border-border bg-card/50 p-4 text-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground">Desporto</span>
+                  <span className="font-semibold text-foreground">{selectedPlayer.sport}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground">Posicao</span>
+                  <span className="font-semibold text-foreground">{selectedPlayer.position}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground">Nivel</span>
+                  <span className="font-semibold text-foreground">{selectedPlayer.level}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground">Idade</span>
+                  <span className="font-semibold text-foreground">{selectedPlayer.age} anos</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground">Cidade</span>
+                  <span className="font-semibold text-foreground">{selectedPlayer.city}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground">E-mail</span>
+                  <span className="font-semibold text-foreground">{selectedPlayer.email}</span>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSelectedPlayer(null)}>
+                Fechar
+              </Button>
+              {selectedPlayer?.email && (
+                <Button className="gap-2" onClick={() => handleContactViaEmail(selectedPlayer.email)}>
+                  <Mail className="h-4 w-4" /> Contactar
+                </Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
