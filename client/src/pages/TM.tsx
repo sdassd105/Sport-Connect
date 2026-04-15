@@ -2,6 +2,7 @@ import Layout from "@/components/Layout";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,7 @@ interface Player {
   age: number;
   city: string;
   email: string;
+  profilePhoto?: string | null;
 }
 
 interface Team {
@@ -68,6 +70,17 @@ function mapSkillLabel(level?: string | null) {
   return "Intermedio";
 }
 
+function getInitials(name: string) {
+  const cleaned = name.replace(/['"]/g, "").trim();
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  const letters = parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+
+  return letters || "??";
+}
+
 export default function TM() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState(
@@ -97,6 +110,7 @@ export default function TM() {
       age: 22,
       city: "Lisboa",
       email: "lucas@email.com",
+      profilePhoto: null,
     },
     {
       id: 2,
@@ -107,6 +121,7 @@ export default function TM() {
       age: 26,
       city: "Porto",
       email: "ana@email.com",
+      profilePhoto: null,
     },
     {
       id: 3,
@@ -117,6 +132,7 @@ export default function TM() {
       age: 29,
       city: "Setubal",
       email: "marcos@email.com",
+      profilePhoto: null,
     },
   ]);
 
@@ -414,24 +430,35 @@ export default function TM() {
                 </Card>
               )}
 
-              <div className="grid gap-4">
-                {playersSeekingTeams.map((player) => (
-                  <Card key={player.id} className="transition-colors hover:border-primary">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="mb-2 text-lg font-display font-bold">{player.name}</h3>
-                          <div className="space-y-1 text-sm text-muted-foreground">
-                            <p>Desporto: <strong>{player.sport}</strong></p>
-                            <p>Posicao: <strong>{player.position}</strong></p>
-                            <p>Nivel: <strong>{player.level}</strong></p>
-                            <p>Idade: <strong>{player.age}</strong> | Cidade: <strong>{player.city}</strong></p>
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Button onClick={() => handleViewProfile(player.id)} variant="outline" size="sm">
-                            Ver Perfil
-                          </Button>
+	              <div className="grid gap-4">
+	                {playersSeekingTeams.map((player) => (
+	                  <Card key={player.id} className="transition-colors hover:border-primary">
+	                    <CardContent className="p-6">
+	                      <div className="flex items-start justify-between gap-4">
+	                        <div className="flex min-w-0 flex-1 items-start gap-4">
+	                          <Avatar className="size-14 border border-border">
+	                            {player.profilePhoto ? (
+	                              <AvatarImage src={player.profilePhoto} alt={player.name} className="object-cover" />
+	                            ) : null}
+	                            <AvatarFallback className="text-sm font-bold text-muted-foreground">
+	                              {getInitials(player.name)}
+	                            </AvatarFallback>
+	                          </Avatar>
+
+	                          <div className="min-w-0 flex-1">
+	                            <h3 className="mb-2 truncate text-lg font-display font-bold">{player.name}</h3>
+	                            <div className="space-y-1 text-sm text-muted-foreground">
+	                              <p>Desporto: <strong>{player.sport}</strong></p>
+	                              <p>Posicao: <strong>{player.position}</strong></p>
+	                              <p>Nivel: <strong>{player.level}</strong></p>
+	                              <p>Idade: <strong>{player.age}</strong> | Cidade: <strong>{player.city}</strong></p>
+	                            </div>
+	                          </div>
+	                        </div>
+	                        <div className="flex flex-col gap-2">
+	                          <Button onClick={() => handleViewProfile(player.id)} variant="outline" size="sm">
+	                            Ver Perfil
+	                          </Button>
                           <Button onClick={() => handleContactViaEmail(player.email)} size="sm" className="gap-2">
                             <Mail className="h-4 w-4" /> Contactar
                           </Button>
@@ -632,14 +659,31 @@ export default function TM() {
           onOpenChange={(open) => {
             if (!open) setSelectedPlayer(null);
           }}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{selectedPlayer?.name}</DialogTitle>
-              <DialogDescription>
-                Perfil do jogador integrado no T&amp;M.
-              </DialogDescription>
-            </DialogHeader>
+	        >
+	          <DialogContent>
+	            <DialogHeader>
+	              <div className="flex items-center gap-3">
+	                <Avatar className="size-12 border border-border">
+	                  {selectedPlayer?.profilePhoto ? (
+	                    <AvatarImage
+	                      src={selectedPlayer.profilePhoto}
+	                      alt={selectedPlayer.name}
+	                      className="object-cover"
+	                    />
+	                  ) : null}
+	                  <AvatarFallback className="text-sm font-bold text-muted-foreground">
+	                    {selectedPlayer ? getInitials(selectedPlayer.name) : "??"}
+	                  </AvatarFallback>
+	                </Avatar>
+
+	                <div className="min-w-0 space-y-1">
+	                  <DialogTitle className="truncate">{selectedPlayer?.name}</DialogTitle>
+	                  <DialogDescription>
+	                    Perfil do jogador integrado no T&amp;M.
+	                  </DialogDescription>
+	                </div>
+	              </div>
+	            </DialogHeader>
 
             {selectedPlayer && (
               <div className="grid gap-3 rounded-lg border border-border bg-card/50 p-4 text-sm">
