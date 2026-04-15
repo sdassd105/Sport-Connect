@@ -18,6 +18,17 @@ type CreateGameInput = {
   skillLevel?: SkillLevel;
 };
 
+type CreateAnnouncementInput = {
+  userId: number;
+  type: "procurando_time" | "procurando_jogador" | "procurando_treinador";
+  sport: "futebol" | "basquete" | "volei";
+  title: string;
+  description?: string;
+  position?: string;
+  skillLevel?: SkillLevel;
+  city?: string;
+};
+
 type SaveNewsArticleInput = Omit<SharedNewsArticle, "content"> & {
   id?: string;
   content?: string;
@@ -380,6 +391,69 @@ export async function getAnnouncementsByTypeAndSport(type: string, sport: string
       and is_active = true
     order by created_at desc
   `;
+}
+
+export async function getAnnouncementsByType(type: string) {
+  return sql`
+    select
+      id,
+      user_id as "userId",
+      type,
+      sport,
+      title,
+      description,
+      position,
+      skill_level as "skillLevel",
+      city,
+      is_active as "isActive",
+      created_at as "createdAt",
+      updated_at as "updatedAt"
+    from announcements
+    where type = ${type}
+      and is_active = true
+    order by created_at desc
+  `;
+}
+
+export async function createAnnouncement(data: CreateAnnouncementInput) {
+  const rows = await sql`
+    insert into announcements (
+      user_id,
+      type,
+      sport,
+      title,
+      description,
+      position,
+      skill_level,
+      city,
+      is_active
+    ) values (
+      ${data.userId},
+      ${data.type},
+      ${data.sport},
+      ${data.title},
+      ${data.description ?? null},
+      ${data.position ?? null},
+      ${data.skillLevel ?? null},
+      ${data.city ?? null},
+      true
+    )
+    returning
+      id,
+      user_id as "userId",
+      type,
+      sport,
+      title,
+      description,
+      position,
+      skill_level as "skillLevel",
+      city,
+      is_active as "isActive",
+      created_at as "createdAt",
+      updated_at as "updatedAt"
+  `;
+
+  return firstRow(rows);
 }
 
 // ===== NEWS =====

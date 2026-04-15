@@ -3,12 +3,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Calendar, MapPin, Users, Plus, ShieldCheck, Clock } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  loadStoredTournaments,
+  nextTournamentId,
+  saveStoredTournaments,
+  type StoredTournament,
+} from "@/services/tournamentStorage";
 
 export default function Torneios() {
   const [showCreate, setShowCreate] = useState(false);
   const { user } = useAuth();
+  const [storedTournaments, setStoredTournaments] = useState<StoredTournament[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     type: "amador",
@@ -75,6 +82,58 @@ export default function Torneios() {
     },
   ];
 
+  useEffect(() => {
+    setStoredTournaments(loadStoredTournaments());
+  }, []);
+
+  useEffect(() => {
+    saveStoredTournaments(storedTournaments);
+  }, [storedTournaments]);
+
+  const customAmateurTournaments = useMemo(
+    () =>
+      storedTournaments
+        .filter((tournament) => tournament.type === "amador")
+        .map((tournament) => ({
+          id: tournament.id,
+          name: tournament.name,
+          sport:
+            tournament.sport === "futebol"
+              ? "Futebol"
+              : tournament.sport === "basquete"
+                ? "Basquete"
+                : "Volei",
+          teams: `${tournament.registeredTeams}/${tournament.maxTeams}`,
+          date: tournament.date,
+          location: `${tournament.location}${tournament.address ? `, ${tournament.address}` : ""}`,
+          organizer: tournament.organizer ?? "Voce",
+          type: tournament.type,
+        })),
+    [storedTournaments]
+  );
+
+  const customProfessionalTournaments = useMemo(
+    () =>
+      storedTournaments
+        .filter((tournament) => tournament.type === "profissional")
+        .map((tournament) => ({
+          id: tournament.id,
+          name: tournament.name,
+          sport:
+            tournament.sport === "futebol"
+              ? "Futebol"
+              : tournament.sport === "basquete"
+                ? "Basquete"
+                : "Volei",
+          teams: `${tournament.registeredTeams}/${tournament.maxTeams}`,
+          date: tournament.date,
+          location: `${tournament.location}${tournament.address ? `, ${tournament.address}` : ""}`,
+          status: "Aberto",
+          type: tournament.type,
+        })),
+    [storedTournaments]
+  );
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -92,7 +151,22 @@ export default function Torneios() {
       return;
     }
 
-    console.log("Torneio criado:", formData);
+    setStoredTournaments((current) => [
+      ...current,
+      {
+        id: nextTournamentId(current),
+        name: formData.name,
+        sport: formData.sport as StoredTournament["sport"],
+        type: formData.type as StoredTournament["type"],
+        date: formData.date,
+        location: formData.location,
+        address: formData.address,
+        maxTeams: Number(formData.maxTeams),
+        registeredTeams: 0,
+        organizer: user?.name ?? "Voce",
+        createdAt: new Date().toISOString(),
+      },
+    ]);
     setFormData({
       name: "",
       type: "amador",
@@ -262,7 +336,7 @@ export default function Torneios() {
 
           <TabsContent value="amador" className="space-y-6">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {amadorTournaments.map((t) => (
+              {[...customAmateurTournaments, ...amadorTournaments].map((t) => (
                 <Card key={t.id} className="overflow-hidden border-2 border-border transition-colors hover:border-primary">
                   <CardHeader>
                     <div className="mb-2 flex items-center justify-between">
@@ -294,7 +368,7 @@ export default function Torneios() {
 
           <TabsContent value="profissional" className="space-y-6">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {profissionalTournaments.map((t) => (
+              {[...customProfessionalTournaments, ...profissionalTournaments].map((t) => (
                 <Card key={t.id} className="border-2 border-border transition-colors hover:border-secondary">
                   <CardHeader>
                     <div className="mb-2 flex items-center justify-between">

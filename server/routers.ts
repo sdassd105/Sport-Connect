@@ -133,6 +133,16 @@ export const appRouter = router({
   }),
 
   tm: router({
+    getAnnouncementsByType: publicProcedure
+      .input(
+        z.object({
+          type: z.enum(["procurando_time", "procurando_jogador", "procurando_treinador"]),
+        })
+      )
+      .query(async ({ input }) => {
+        return db.getAnnouncementsByType(input.type);
+      }),
+
     getTeamsBySport: publicProcedure
       .input(z.object({ sport: z.enum(["futebol", "basquete", "volei"]) }))
       .query(async ({ input }) => {
@@ -148,6 +158,23 @@ export const appRouter = router({
       )
       .query(async ({ input }) => {
         return db.getAnnouncementsByTypeAndSport(input.type, input.sport);
+      }),
+
+    createAnnouncement: publicProcedure
+      .input(
+        z.object({
+          userId: z.number(),
+          type: z.enum(["procurando_time", "procurando_jogador", "procurando_treinador"]),
+          sport: z.enum(["futebol", "basquete", "volei"]),
+          title: z.string().min(1),
+          description: z.string().optional(),
+          position: z.string().optional(),
+          skillLevel: z.enum(["iniciante", "intermediario", "avancado"]).optional(),
+          city: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return db.createAnnouncement(input);
       }),
   }),
 

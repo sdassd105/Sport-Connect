@@ -3,18 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Users, Calendar, Plus, Trophy, ChevronRight } from "lucide-react";
-import { useState } from "react";
-
-interface Tournament {
-  id: number;
-  title: string;
-  sport: "futebol" | "basquete" | "volei";
-  date: string;
-  location: string;
-  type: "Torneio" | "Competicao" | "Circuito";
-  maxTeams: number;
-  registeredTeams: number;
-}
+import { useEffect, useState } from "react";
+import {
+  loadStoredTournaments,
+  nextTournamentId,
+  saveStoredTournaments,
+  type StoredTournament,
+} from "@/services/tournamentStorage";
 
 interface Location {
   id: number;
@@ -43,7 +38,7 @@ export default function Esportes() {
   const [showGameDetails, setShowGameDetails] = useState<number | null>(null);
   const [userConfirmations, setUserConfirmations] = useState<Record<number, boolean>>({});
 
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [tournaments, setTournaments] = useState<StoredTournament[]>([]);
   const locations: Location[] = [];
   const [amateurGames] = useState<AmateurGame[]>([]);
 
@@ -54,24 +49,34 @@ export default function Esportes() {
     maxTeams: 16,
   });
 
+  useEffect(() => {
+    setTournaments(loadStoredTournaments());
+  }, []);
+
+  useEffect(() => {
+    saveStoredTournaments(tournaments);
+  }, [tournaments]);
+
   const filteredTournaments = tournaments.filter((t) => t.sport === selectedSport);
   const filteredLocations = locations.filter((l) => l.sport === selectedSport);
   const filteredAmateurGames = amateurGames.filter((g) => g.sport === selectedSport);
 
   const handleCreateTournament = () => {
     if (newTournament.title && newTournament.date && newTournament.location) {
-      const newId = Math.max(...tournaments.map((t) => t.id), 0) + 1;
+      const newId = nextTournamentId(tournaments);
       setTournaments([
         ...tournaments,
         {
           id: newId,
-          title: newTournament.title,
+          name: newTournament.title,
           sport: selectedSport,
           date: newTournament.date,
           location: newTournament.location,
-          type: "Torneio",
+          address: newTournament.location,
+          type: "amador",
           maxTeams: newTournament.maxTeams,
           registeredTeams: 0,
+          createdAt: new Date().toISOString(),
         },
       ]);
       setNewTournament({ title: "", date: "", location: "", maxTeams: 16 });
@@ -183,7 +188,7 @@ export default function Esportes() {
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h3 className="mb-2 text-lg font-display font-bold">{tournament.title}</h3>
+                          <h3 className="mb-2 text-lg font-display font-bold">{tournament.name}</h3>
                           <div className="space-y-2 text-sm text-muted-foreground">
                             <div className="flex items-center gap-2">
                               <Calendar className="h-4 w-4" /> {tournament.date}
@@ -206,7 +211,7 @@ export default function Esportes() {
                           <div className="rounded-lg bg-primary/10 p-4">
                             <h4 className="mb-2 font-semibold">Informacoes Completas</h4>
                             <p className="text-sm">
-                              Tipo: <strong>{tournament.type}</strong>
+                              Tipo: <strong>{tournament.type === "profissional" ? "Profissional" : "Amador"}</strong>
                             </p>
                             <p className="text-sm">
                               Vagas Disponiveis: <strong>{tournament.maxTeams - tournament.registeredTeams}</strong>
