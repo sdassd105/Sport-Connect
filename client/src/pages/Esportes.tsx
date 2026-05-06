@@ -4,6 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Users, Calendar, Plus, Trophy, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import {
   loadStoredTournaments,
   nextTournamentId,
@@ -33,20 +36,33 @@ interface AmateurGame {
 }
 
 export default function Esportes() {
+  const { user } = useAuth();
   const [selectedSport, setSelectedSport] = useState<"futebol" | "basquete" | "volei">("futebol");
   const [showCreateTournament, setShowCreateTournament] = useState(false);
+  const [showCreateAmateurGame, setShowCreateAmateurGame] = useState(false);
   const [showGameDetails, setShowGameDetails] = useState<number | null>(null);
   const [userConfirmations, setUserConfirmations] = useState<Record<number, boolean>>({});
 
   const [tournaments, setTournaments] = useState<StoredTournament[]>([]);
   const locations: Location[] = [];
-  const [amateurGames] = useState<AmateurGame[]>([]);
+  const [amateurGames, setAmateurGames] = useState<AmateurGame[]>([]);
+  const [isLoadingAmateurGames, setIsLoadingAmateurGames] = useState(false);
+  const [isSavingAmateurGame, setIsSavingAmateurGame] = useState(false);
 
   const [newTournament, setNewTournament] = useState({
     title: "",
     date: "",
     location: "",
     maxTeams: 16,
+  });
+
+  const [newAmateurGame, setNewAmateurGame] = useState({
+    title: "",
+    date: "",
+    location: "",
+    maxPlayers: 10,
+    skillLevel: "intermediario" as "iniciante" | "intermediario" | "avancado",
+    description: "",
   });
 
   useEffect(() => {
@@ -56,6 +72,46 @@ export default function Esportes() {
   useEffect(() => {
     saveStoredTournaments(tournaments);
   }, [tournaments]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadGames() {
+      setIsLoadingAmateurGames(true);
+
+      try {
+        const games = await trpc.sports.getGamesBySport.query({ sport: selectedSport });
+        if (cancelled) return;
+
+        setAmateurGames(
+          games.map((game) => ({
+            id: game.id,
+            title: game.title,
+            sport: game.sport,
+            date: new Date(game.gameDate).toLocaleString("pt-PT"),
+            location: game.customLocation ?? "Local nao informado",
+            maxPlayers: game.maxPlayers ?? 0,
+            registeredPlayers: 0,
+            organizer:
+              user && game.createdBy === user.id
+                ? user.name ?? "Voce"
+                : `Utilizador ${game.createdBy}`,
+          }))
+        );
+      } catch (error) {
+        console.error("Erro ao carregar jogos amadores:", error);
+        if (!cancelled) toast.error("Nao foi possivel carregar os jogos amadores.");
+      } finally {
+        if (!cancelled) setIsLoadingAmateurGames(false);
+      }
+    }
+
+    loadGames();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSport, user?.id, user?.name]);
 
   const filteredTournaments = tournaments.filter((t) => t.sport === selectedSport);
   const filteredLocations = locations.filter((l) => l.sport === selectedSport);
@@ -81,20 +137,77 @@ export default function Esportes() {
       ]);
       setNewTournament({ title: "", date: "", location: "", maxTeams: 16 });
       setShowCreateTournament(false);
-      alert("Torneio criado com sucesso!");
+      toast.success("Torneio criado com sucesso!");
     } else {
-      alert("Por favor, preencha todos os campos.");
+      toast.error("Por favor, preencha todos os campos.");
+    }
+  };
+
+  const handleCreateAmateurGame = async () => {
+    if (!user) {
+      toast.error("Precisa iniciar sessao para criar um jogo.");
+      return;
+    }
+
+    if (!newAmateurGame.title || !newAmateurGame.date || !newAmateurGame.location) {
+      toast.error("Preencha nome, data/hora e local do jogo.");
+      return;
+    }
+
+    setIsSavingAmateurGame(true);
+
+    try {
+      const createdGame = await trpc.sports.createGame.mutate({
+        createdBy: user.id,
+        sport: selectedSport,
+        title: newAmateurGame.title,
+        description: newAmateurGame.description ? newAmateurGame.description : undefined,
+        customLocation: newAmateurGame.location,
+        gameDate: new Date(newAmateurGame.date),
+        maxPlayers: newAmateurGame.maxPlayers,
+        skillLevel: newAmateurGame.skillLevel,
+      });
+
+      setAmateurGames((current) => [
+        {
+          id: createdGame.id,
+          title: createdGame.title,
+          sport: createdGame.sport,
+          date: new Date(createdGame.gameDate).toLocaleString("pt-PT"),
+          location: createdGame.customLocation ?? newAmateurGame.location,
+          maxPlayers: createdGame.maxPlayers ?? newAmateurGame.maxPlayers,
+          registeredPlayers: 0,
+          organizer: user.name ?? "Voce",
+        },
+        ...current,
+      ]);
+
+      setNewAmateurGame({
+        title: "",
+        date: "",
+        location: "",
+        maxPlayers: 10,
+        skillLevel: "intermediario",
+        description: "",
+      });
+      setShowCreateAmateurGame(false);
+      toast.success("Jogo amador criado e salvo na base de dados.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Nao foi possivel criar o jogo amador.";
+      toast.error(message);
+    } finally {
+      setIsSavingAmateurGame(false);
     }
   };
 
   const handleConfirmAmateurGame = (gameId: number) => {
     setUserConfirmations({ ...userConfirmations, [gameId]: true });
-    alert("Confirmado! Voce esta registado para este jogo.");
+    toast.success("Confirmado! Voce esta registado para este jogo.");
   };
 
   const handleCancelAmateurGame = (gameId: number) => {
     setUserConfirmations({ ...userConfirmations, [gameId]: false });
-    alert("Cancelado! Voce foi removido da lista de jogadores.");
+    toast.success("Cancelado! Voce foi removido da lista de jogadores.");
   };
 
   return (
@@ -271,9 +384,111 @@ export default function Esportes() {
           </TabsContent>
 
           <TabsContent value="amador" className="space-y-6">
-            <h2 className="text-2xl font-display font-bold">Jogos Amadores</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-display font-bold">Jogos Amadores</h2>
+              <Button onClick={() => setShowCreateAmateurGame(!showCreateAmateurGame)} className="gap-2">
+                <Plus className="h-4 w-4" /> Criar Jogo Amador
+              </Button>
+            </div>
+
+            {showCreateAmateurGame && (
+              <Card className="border-2 border-primary bg-card">
+                <CardHeader>
+                  <CardTitle>Criar Jogo Amador</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Nome do Jogo</label>
+                    <input
+                      type="text"
+                      value={newAmateurGame.title}
+                      onChange={(e) => setNewAmateurGame({ ...newAmateurGame, title: e.target.value })}
+                      className="mt-1 w-full rounded border bg-background p-2"
+                      placeholder="ex: Pelada de sexta"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Data e Hora</label>
+                    <input
+                      type="datetime-local"
+                      value={newAmateurGame.date}
+                      onChange={(e) => setNewAmateurGame({ ...newAmateurGame, date: e.target.value })}
+                      className="mt-1 w-full rounded border bg-background p-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Local / Endereco</label>
+                    <input
+                      type="text"
+                      value={newAmateurGame.location}
+                      onChange={(e) => setNewAmateurGame({ ...newAmateurGame, location: e.target.value })}
+                      className="mt-1 w-full rounded border bg-background p-2"
+                      placeholder="ex: Campo Sintetico do Bairro"
+                    />
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="text-sm font-medium">Max. Jogadores</label>
+                      <input
+                        type="number"
+                        min={2}
+                        value={newAmateurGame.maxPlayers}
+                        onChange={(e) =>
+                          setNewAmateurGame({
+                            ...newAmateurGame,
+                            maxPlayers: Number(e.target.value || 0),
+                          })
+                        }
+                        className="mt-1 w-full rounded border bg-background p-2"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Nivel</label>
+                      <select
+                        value={newAmateurGame.skillLevel}
+                        onChange={(e) =>
+                          setNewAmateurGame({
+                            ...newAmateurGame,
+                            skillLevel: e.target.value as typeof newAmateurGame.skillLevel,
+                          })
+                        }
+                        className="mt-1 w-full rounded border bg-background p-2"
+                      >
+                        <option value="iniciante">Iniciante</option>
+                        <option value="intermediario">Intermedio</option>
+                        <option value="avancado">Avancado</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Descricao (opcional)</label>
+                    <textarea
+                      value={newAmateurGame.description}
+                      onChange={(e) => setNewAmateurGame({ ...newAmateurGame, description: e.target.value })}
+                      className="mt-1 min-h-20 w-full rounded border bg-background p-2"
+                      placeholder="Regras, nivel, o que levar, etc."
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleCreateAmateurGame} className="flex-1" disabled={isSavingAmateurGame}>
+                      {isSavingAmateurGame ? "A guardar..." : "Criar"}
+                    </Button>
+                    <Button onClick={() => setShowCreateAmateurGame(false)} variant="outline" className="flex-1">
+                      Cancelar
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <div className="grid gap-4">
-              {filteredAmateurGames.length > 0 ? (
+              {isLoadingAmateurGames ? (
+                <Card>
+                  <CardContent className="p-6 text-center text-muted-foreground">
+                    A carregar jogos amadores...
+                  </CardContent>
+                </Card>
+              ) : filteredAmateurGames.length > 0 ? (
                 filteredAmateurGames.map((game) => (
                   <Card
                     key={game.id}
@@ -296,7 +511,7 @@ export default function Esportes() {
                           </div>
                         </div>
                         <div className="text-right">
-                          {selectedSport === "futebol" && (
+                          {game.maxPlayers > 0 && (
                             <div className="mb-4 text-sm font-semibold">
                               {game.registeredPlayers}/{game.maxPlayers} Jogadores
                             </div>

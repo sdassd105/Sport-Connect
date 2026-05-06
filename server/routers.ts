@@ -105,7 +105,7 @@ export const appRouter = router({
           description: z.string().optional(),
           locationId: z.number().optional(),
           customLocation: z.string().optional(),
-          gameDate: z.date(),
+          gameDate: z.coerce.date(),
           maxPlayers: z.number().optional(),
           skillLevel: z.enum(["iniciante", "intermediario", "avancado"]).optional(),
         })
