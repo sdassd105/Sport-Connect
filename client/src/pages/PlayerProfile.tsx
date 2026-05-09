@@ -31,6 +31,71 @@ type FormState = {
   trainerCertification: string;
 };
 
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Falha ao ler a imagem."));
+    reader.onloadend = () => resolve(String(reader.result ?? ""));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), type, quality);
+  });
+}
+
+async function compressImageToDataUrl(file: File): Promise<string> {
+  // Base64 increases payload size (~33%). Keep the output small to avoid API/proxy limits.
+  const MAX_DIMENSION = 640;
+  const MAX_BYTES = 900 * 1024; // ~900KB (before Base64 overhead)
+
+  const originalDataUrl = await blobToDataUrl(file);
+
+  // If the original file is already small, keep it as-is.
+  if (file.size <= MAX_BYTES) return originalDataUrl;
+
+  const img = new Image();
+  img.src = originalDataUrl;
+
+  try {
+    await img.decode();
+  } catch {
+    // If decode fails, fall back to original (still might fail on save if it's too large).
+    return originalDataUrl;
+  }
+
+  const sourceWidth = img.naturalWidth || img.width;
+  const sourceHeight = img.naturalHeight || img.height;
+
+  const scale = Math.min(1, MAX_DIMENSION / Math.max(sourceWidth, sourceHeight));
+  const targetWidth = Math.max(1, Math.round(sourceWidth * scale));
+  const targetHeight = Math.max(1, Math.round(sourceHeight * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return originalDataUrl;
+
+  ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+  // JPEG compresses profile photos well and is universally supported.
+  let quality = 0.85;
+  let blob: Blob | null = null;
+
+  for (let attempt = 0; attempt < 6; attempt++) {
+    blob = await canvasToBlob(canvas, "image/jpeg", quality);
+    if (blob && blob.size <= MAX_BYTES) break;
+    quality = Math.max(0.5, quality - 0.1);
+  }
+
+  if (!blob) return originalDataUrl;
+  return blobToDataUrl(blob);
+}
+
 export default function PlayerProfile() {
   const { user: authUser, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
@@ -173,11 +238,15 @@ export default function PlayerProfile() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData((prev) => ({ ...prev, profilePhoto: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
+    // Compress before saving (prevents oversized JSON payloads and proxy failures).
+    compressImageToDataUrl(file)
+      .then((dataUrl) => {
+        setFormData((prev) => ({ ...prev, profilePhoto: dataUrl }));
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Nao foi possivel processar a imagem. Tente outra foto.");
+      });
   };
 
   const handleSave = async () => {
@@ -229,7 +298,11 @@ export default function PlayerProfile() {
       setIsEditing(false);
       alert("Perfil guardado com sucesso.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Nao foi possivel guardar o perfil.";
+      const rawMessage = error instanceof Error ? error.message : "";
+      const message =
+        rawMessage.includes("Unexpected end of JSON input") || rawMessage.includes("Failed to fetch")
+          ? "Nao foi possivel guardar o perfil (API sem resposta). Se estiver a enviar uma foto, tente uma imagem menor e confirme se o backend esta online."
+          : rawMessage || "Nao foi possivel guardar o perfil.";
       alert(message);
     } finally {
       setIsSaving(false);
