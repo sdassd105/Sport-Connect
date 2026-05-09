@@ -48,23 +48,24 @@ function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number):
 
 async function compressImageToDataUrl(file: File): Promise<string> {
   // Base64 increases payload size (~33%). Keep the output small to avoid API/proxy limits.
-  const MAX_DIMENSION = 640;
-  const MAX_BYTES = 900 * 1024; // ~900KB (before Base64 overhead)
-
-  const originalDataUrl = await blobToDataUrl(file);
+  const MAX_DIMENSION = 512;
+  const MAX_BYTES = 250 * 1024; // ~250KB (binary) => ~330KB after Base64 overhead
 
   // If the original file is already small, keep it as-is.
-  if (file.size <= MAX_BYTES) return originalDataUrl;
+  if (file.size <= MAX_BYTES) return blobToDataUrl(file);
 
   const img = new Image();
-  img.src = originalDataUrl;
+  const objectUrl = URL.createObjectURL(file);
+  img.src = objectUrl;
 
   try {
     await img.decode();
   } catch {
+    URL.revokeObjectURL(objectUrl);
     // If decode fails, fall back to original (still might fail on save if it's too large).
-    return originalDataUrl;
+    return blobToDataUrl(file);
   }
+  URL.revokeObjectURL(objectUrl);
 
   const sourceWidth = img.naturalWidth || img.width;
   const sourceHeight = img.naturalHeight || img.height;
@@ -78,12 +79,12 @@ async function compressImageToDataUrl(file: File): Promise<string> {
   canvas.height = targetHeight;
 
   const ctx = canvas.getContext("2d");
-  if (!ctx) return originalDataUrl;
+  if (!ctx) return blobToDataUrl(file);
 
   ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
   // JPEG compresses profile photos well and is universally supported.
-  let quality = 0.85;
+  let quality = 0.82;
   let blob: Blob | null = null;
 
   for (let attempt = 0; attempt < 6; attempt++) {
@@ -92,7 +93,7 @@ async function compressImageToDataUrl(file: File): Promise<string> {
     quality = Math.max(0.5, quality - 0.1);
   }
 
-  if (!blob) return originalDataUrl;
+  if (!blob) return blobToDataUrl(file);
   return blobToDataUrl(blob);
 }
 
@@ -254,6 +255,13 @@ export default function PlayerProfile() {
 
     if (!formData.name || !formData.email) {
       alert("Por favor, preencha o nome e e-mail.");
+      return;
+    }
+
+    // Extra guard: if the data URL is still too large, don't even try calling the API
+    // (Vite proxy / hosting may reset the connection on oversized request bodies).
+    if (formData.profilePhoto && formData.profilePhoto.length > 800_000) {
+      alert("A foto esta muito grande. Escolha outra imagem (mais pequena) e tente novamente.");
       return;
     }
 
