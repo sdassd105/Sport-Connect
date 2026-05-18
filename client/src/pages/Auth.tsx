@@ -18,10 +18,20 @@ export default function Auth() {
   const [formData, setFormData] = useState({ email: "", password: "", name: "" });
 
   const getErrorMessage = (err: unknown, fallback: string) => {
-    if (err instanceof Error && err.message) return err.message;
+    if (err instanceof Error && err.message) {
+      if (err.message.includes("Unexpected token") && err.message.includes("is not valid JSON")) {
+        return "A API de autenticacao respondeu com uma pagina em vez de JSON. Verifique se o backend esta publicado e se VITE_API_URL aponta para a API correta.";
+      }
+      return err.message;
+    }
     if (typeof err === "object" && err !== null) {
       const maybeMessage = (err as { message?: unknown }).message;
-      if (typeof maybeMessage === "string" && maybeMessage) return maybeMessage;
+      if (typeof maybeMessage === "string" && maybeMessage) {
+        if (maybeMessage.includes("Unexpected token") && maybeMessage.includes("is not valid JSON")) {
+          return "A API de autenticacao respondeu com uma pagina em vez de JSON. Verifique se o backend esta publicado e se VITE_API_URL aponta para a API correta.";
+        }
+        return maybeMessage;
+      }
       const maybeShape = (err as { shape?: { message?: unknown } }).shape;
       if (typeof maybeShape?.message === "string" && maybeShape.message) return maybeShape.message;
       const maybeData = (err as { data?: { zodError?: unknown } }).data;

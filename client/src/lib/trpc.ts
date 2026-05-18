@@ -5,7 +5,7 @@ import type { AppRouter } from "../../../server/routers";
 function getTrpcUrl() {
   const configuredApiUrl = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "");
 
-  if (!Capacitor.isNativePlatform()) {
+  if (!Capacitor.isNativePlatform() && import.meta.env.DEV) {
     return "/api/trpc";
   }
 
@@ -13,6 +13,10 @@ function getTrpcUrl() {
     return configuredApiUrl.endsWith("/api/trpc")
       ? configuredApiUrl
       : `${configuredApiUrl}/api/trpc`;
+  }
+
+  if (!Capacitor.isNativePlatform()) {
+    return `${window.location.origin}/api/trpc`;
   }
 
   return "http://10.0.2.2:3001/api/trpc";
