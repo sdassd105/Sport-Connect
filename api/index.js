@@ -1,8 +1,3 @@
-// api/index.js - Vercel Serverless Function
-import express from 'express';
+import app from "../dist/index.js";
 
-// Import your existing server setup
-import('../server/index.js').then(({ default: app }) => {
-  // Export for Vercel
-  export default app;
-});
+export default app;

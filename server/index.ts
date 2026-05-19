@@ -11,9 +11,8 @@ import { saveNewsArticle } from "./db";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function startServer() {
+export function createApp() {
   const app = express();
-  const server = createServer(app);
   app.use(express.json({ limit: "10mb" }));
 
   app.get("/api/health", (_req, res) => {
@@ -102,6 +101,16 @@ async function startServer() {
     res.sendFile(path.join(staticPath, "index.html"));
   });
 
+  return app;
+}
+
+const app = createApp();
+
+export default app;
+
+async function startServer() {
+  const server = createServer(app);
+
   const port = process.env.PORT || 3001;
 
   server.listen(port, () => {
@@ -109,4 +118,9 @@ async function startServer() {
   });
 }
 
-startServer().catch(console.error);
+const currentFilePath = fileURLToPath(import.meta.url);
+const entryFilePath = process.argv[1] ? path.resolve(process.argv[1]) : "";
+
+if (currentFilePath === entryFilePath) {
+  startServer().catch(console.error);
+}
