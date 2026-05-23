@@ -1,21 +1,27 @@
-// api/index.js - Vercel Serverless Function Handler
-import express from 'express';
-import cors from 'cors';
+export default function handler(req, res) {
+  // Handle CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-const app = express();
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-// Middlewares
-app.use(cors());
-app.use(express.json());
+  // Route handling
+  if (req.url === '/api' || req.url === '/api/') {
+    return res.status(200).json({ 
+      message: 'Sport Connect API funcionando!',
+      timestamp: new Date().toISOString()
+    });
+  }
 
-// Rota de teste
-app.get('/api', (req, res) => {
-  res.json({ message: 'API funcionando!' });
-});
+  if (req.url === '/api/health') {
+    return res.status(200).json({ 
+      status: 'ok',
+      timestamp: new Date().toISOString()
+    });
+  }
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// Export para Vercel
-export default app;
+  return res.status(404).json({ error: 'Route not found' });
+}
