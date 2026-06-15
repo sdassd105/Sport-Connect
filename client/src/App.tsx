@@ -1,28 +1,35 @@
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
+import { Suspense, lazy, useEffect } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import Home from "./pages/Home";
-import Esportes from "./pages/Esportes";
-import Torneios from "./pages/Torneios";
-import Times from "./pages/Times";
-import TM from "./pages/TM";
-import PlayerProfile from "./pages/PlayerProfile";
 import Auth from "./pages/Auth";
+import NotFound from "@/pages/NotFound";
+
+const Home = lazy(() => import("./pages/Home"));
+const Esportes = lazy(() => import("./pages/Esportes"));
+const Torneios = lazy(() => import("./pages/Torneios"));
+const Times = lazy(() => import("./pages/Times"));
+const TM = lazy(() => import("./pages/TM"));
+const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, isLoading } = useAuth();
   const [location, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated && location !== "/auth") {
+      setLocation("/auth");
+    }
+  }, [isAuthenticated, isLoading, location, setLocation]);
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">A carregar...</div>;
   }
 
   if (!isAuthenticated && location !== "/auth") {
-    setLocation("/auth");
     return null;
   }
 
@@ -59,7 +66,11 @@ function App() {
         <AuthProvider>
           <TooltipProvider>
             <Toaster />
-            <Router />
+            <Suspense
+              fallback={<div className="min-h-screen flex items-center justify-center">A carregar...</div>}
+            >
+              <Router />
+            </Suspense>
           </TooltipProvider>
         </AuthProvider>
       </ThemeProvider>

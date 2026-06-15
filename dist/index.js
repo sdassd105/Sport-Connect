@@ -18,6 +18,7 @@ function requiredEnv(name) {
   return value;
 }
 function createSqlClient() {
+  const sslMode = process.env.DATABASE_SSL;
   const databaseUrl = process.env.DATABASE_URL;
   if (databaseUrl) {
     return postgres(databaseUrl, {
@@ -35,7 +36,7 @@ function createSqlClient() {
     database,
     username,
     password,
-    ssl: "require",
+    ssl: sslMode === "require" ? "require" : void 0,
     prepare: false
   });
 }
@@ -320,6 +321,66 @@ async function getAnnouncementsByTypeAndSport(type, sport) {
     order by created_at desc
   `;
 }
+async function getAnnouncementsByType(type) {
+  return sql`
+    select
+      id,
+      user_id as "userId",
+      type,
+      sport,
+      title,
+      description,
+      position,
+      skill_level as "skillLevel",
+      city,
+      is_active as "isActive",
+      created_at as "createdAt",
+      updated_at as "updatedAt"
+    from announcements
+    where type = ${type}
+      and is_active = true
+    order by created_at desc
+  `;
+}
+async function createAnnouncement(data) {
+  const rows = await sql`
+    insert into announcements (
+      user_id,
+      type,
+      sport,
+      title,
+      description,
+      position,
+      skill_level,
+      city,
+      is_active
+    ) values (
+      ${data.userId},
+      ${data.type},
+      ${data.sport},
+      ${data.title},
+      ${data.description ?? null},
+      ${data.position ?? null},
+      ${data.skillLevel ?? null},
+      ${data.city ?? null},
+      true
+    )
+    returning
+      id,
+      user_id as "userId",
+      type,
+      sport,
+      title,
+      description,
+      position,
+      skill_level as "skillLevel",
+      city,
+      is_active as "isActive",
+      created_at as "createdAt",
+      updated_at as "updatedAt"
+  `;
+  return firstRow(rows);
+}
 async function getNewsBySport(sport) {
   const rows = sport === "geral" ? await sql`
           select
@@ -492,7 +553,7 @@ var appRouter = router({
         description: z.string().optional(),
         locationId: z.number().optional(),
         customLocation: z.string().optional(),
-        gameDate: z.date(),
+        gameDate: z.coerce.date(),
         maxPlayers: z.number().optional(),
         skillLevel: z.enum(["iniciante", "intermediario", "avancado"]).optional()
       })
@@ -512,6 +573,13 @@ var appRouter = router({
     })
   }),
   tm: router({
+    getAnnouncementsByType: publicProcedure.input(
+      z.object({
+        type: z.enum(["procurando_time", "procurando_jogador", "procurando_treinador"])
+      })
+    ).query(async ({ input }) => {
+      return getAnnouncementsByType(input.type);
+    }),
     getTeamsBySport: publicProcedure.input(z.object({ sport: z.enum(["futebol", "basquete", "volei"]) })).query(async ({ input }) => {
       return getTeamsBySport(input.sport);
     }),
@@ -522,6 +590,20 @@ var appRouter = router({
       })
     ).query(async ({ input }) => {
       return getAnnouncementsByTypeAndSport(input.type, input.sport);
+    }),
+    createAnnouncement: publicProcedure.input(
+      z.object({
+        userId: z.number(),
+        type: z.enum(["procurando_time", "procurando_jogador", "procurando_treinador"]),
+        sport: z.enum(["futebol", "basquete", "volei"]),
+        title: z.string().min(1),
+        description: z.string().optional(),
+        position: z.string().optional(),
+        skillLevel: z.enum(["iniciante", "intermediario", "avancado"]).optional(),
+        city: z.string().optional()
+      })
+    ).mutation(async ({ input }) => {
+      return createAnnouncement(input);
     })
   }),
   profile: router({
@@ -562,14 +644,17 @@ var appRouter = router({
 import { z as z2 } from "zod";
 var __filename = fileURLToPath(import.meta.url);
 var __dirname = path.dirname(__filename);
-async function startServer() {
-  const app = express();
-  const server = createServer(app);
-  app.use(express.json());
-  app.get("/api/health", (_req, res) => {
+function createApp() {
+  const app2 = express();
+  app2.use(express.json({ limit: "10mb" }));
+  app2.get("/api/health", (_req, res) => {
     res.json({ ok: true });
   });
-  app.use((err, _req, res, next) => {
+  app2.use((err, _req, res, next) => {
+    if (typeof err === "object" && err !== null && "type" in err && err.type === "entity.too.large") {
+      res.status(413).json({ ok: false, error: "payload_too_large" });
+      return;
+    }
     if (err instanceof SyntaxError) {
       res.status(400).json({ ok: false, error: "invalid_json" });
       return;
@@ -587,10 +672,10 @@ async function startServer() {
     category: z2.enum(["futebol", "basquete", "volei", "geral"]),
     url: z2.string()
   });
-  app.get("/api/webhooks/make/news", (_req, res) => {
+  app2.get("/api/webhooks/make/news", (_req, res) => {
     res.status(405).json({ ok: false, error: "method_not_allowed", expected: "POST" });
   });
-  app.post("/api/webhooks/make/news", async (req, res) => {
+  app2.post("/api/webhooks/make/news", async (req, res) => {
     try {
       const secret = process.env.MAKE_WEBHOOK_SECRET;
       if (secret) {
@@ -614,20 +699,34 @@ async function startServer() {
       res.status(500).json({ ok: false, error: "internal_error", ...isProd ? {} : { message } });
     }
   });
-  app.use(
+  app2.use(
     "/api/trpc",
     createExpressMiddleware({
       router: appRouter
     })
   );
   const staticPath = process.env.NODE_ENV === "production" ? path.resolve(__dirname, "public") : path.resolve(__dirname, "..", "dist", "public");
-  app.use(express.static(staticPath));
-  app.get("*", (_req, res) => {
+  app2.use(express.static(staticPath));
+  app2.get("*", (_req, res) => {
     res.sendFile(path.join(staticPath, "index.html"));
   });
+  return app2;
+}
+var app = createApp();
+var index_default = app;
+async function startServer() {
+  const server = createServer(app);
   const port = process.env.PORT || 3001;
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
   });
 }
-startServer().catch(console.error);
+var currentFilePath = fileURLToPath(import.meta.url);
+var entryFilePath = process.argv[1] ? path.resolve(process.argv[1]) : "";
+if (currentFilePath === entryFilePath) {
+  startServer().catch(console.error);
+}
+export {
+  createApp,
+  index_default as default
+};

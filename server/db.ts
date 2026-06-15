@@ -41,6 +41,7 @@ function requiredEnv(name: string) {
 }
 
 function createSqlClient() {
+  const sslMode = process.env.DATABASE_SSL;
   const databaseUrl = process.env.DATABASE_URL;
   if (databaseUrl) {
     return postgres(databaseUrl, {
@@ -60,7 +61,7 @@ function createSqlClient() {
     database,
     username,
     password,
-    ssl: "require",
+    ssl: sslMode === "require" ? "require" : undefined,
     prepare: false,
   });
 }

@@ -4,9 +4,14 @@ import type { AppRouter } from "../../../server/routers";
 
 function getTrpcUrl() {
   const configuredApiUrl = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "");
+  const nativeApiUrl = (import.meta.env.VITE_NATIVE_API_URL as string | undefined)?.replace(/\/$/, "");
 
   if (!Capacitor.isNativePlatform() && import.meta.env.DEV) {
     return "/api/trpc";
+  }
+
+  if (Capacitor.isNativePlatform() && nativeApiUrl) {
+    return nativeApiUrl.endsWith("/api/trpc") ? nativeApiUrl : `${nativeApiUrl}/api/trpc`;
   }
 
   if (configuredApiUrl) {
