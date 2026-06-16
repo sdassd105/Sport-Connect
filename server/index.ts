@@ -1,6 +1,8 @@
+
 import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
+import cors from "cors"; 
 import path from "path";
 import { fileURLToPath } from "url";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
@@ -13,11 +15,18 @@ const __dirname = path.dirname(__filename);
 
 export function createApp() {
   const app = express();
+  
+  app.use(cors({
+    origin: 'https://sport-connect-delta.vercel.app',
+    credentials: true
+  }));
+  
   app.use(express.json({ limit: "10mb" }));
 
   app.get("/api/health", (_req, res) => {
     res.json({ ok: true });
   });
+  
 
   // Return JSON on invalid JSON bodies (avoid default HTML error page)
   app.use((err: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
