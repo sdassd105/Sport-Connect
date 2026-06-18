@@ -377,114 +377,147 @@ export default function TM() {
                 </Card>
               )}
 
-	              <div className="grid gap-4">
-	                {playersSeekingTeams.map((player) => (
-	                  <Card key={player.id} className="transition-colors hover:border-primary">
-	                    <CardContent className="p-6">
-	                      <div className="flex items-start justify-between gap-4">
-	                        <div className="flex min-w-0 flex-1 items-start gap-4">
-	                          <Avatar className="size-14 border border-border">
-	                            {player.profilePhoto ? (
-	                              <AvatarImage src={player.profilePhoto} alt={player.name} className="object-cover" />
-	                            ) : null}
-	                            <AvatarFallback className="text-sm font-bold text-muted-foreground">
-	                              {getInitials(player.name)}
-	                            </AvatarFallback>
-	                          </Avatar>
+	              {playersSeekingTeams.length > 0 ? (
+	                <div className="grid gap-4">
+	                  {playersSeekingTeams.map((player) => (
+	                    <Card key={player.id} className="transition-colors hover:border-primary">
+	                      <CardContent className="p-6">
+	                        <div className="flex items-start justify-between gap-4">
+	                          <div className="flex min-w-0 flex-1 items-start gap-4">
+	                            <Avatar className="size-14 border border-border">
+	                              {player.profilePhoto ? (
+	                                <AvatarImage
+	                                  src={player.profilePhoto}
+	                                  alt={player.name}
+	                                  className="object-cover"
+	                                />
+	                              ) : null}
+	                              <AvatarFallback className="text-sm font-bold text-muted-foreground">
+	                                {getInitials(player.name)}
+	                              </AvatarFallback>
+	                            </Avatar>
 
-	                          <div className="min-w-0 flex-1">
-	                            <h3 className="mb-2 truncate text-lg font-display font-bold">{player.name}</h3>
-	                            <div className="space-y-1 text-sm text-muted-foreground">
-	                              <p>Desporto: <strong>{player.sport}</strong></p>
-	                              <p>Posicao: <strong>{player.position}</strong></p>
-	                              <p>Nivel: <strong>{player.level}</strong></p>
-	                              <p>Idade: <strong>{player.age}</strong> | Cidade: <strong>{player.city}</strong></p>
+	                            <div className="min-w-0 flex-1">
+	                              <h3 className="mb-2 truncate text-lg font-display font-bold">{player.name}</h3>
+	                              <div className="space-y-1 text-sm text-muted-foreground">
+	                                <p>
+	                                  Desporto: <strong>{player.sport}</strong>
+	                                </p>
+	                                <p>
+	                                  Posicao: <strong>{player.position}</strong>
+	                                </p>
+	                                <p>
+	                                  Nivel: <strong>{player.level}</strong>
+	                                </p>
+	                                <p>
+	                                  Idade: <strong>{player.age}</strong> | Cidade: <strong>{player.city}</strong>
+	                                </p>
+	                              </div>
 	                            </div>
 	                          </div>
+	                          <div className="flex flex-col gap-2">
+	                            <Button onClick={() => handleViewProfile(player.id)} variant="outline" size="sm">
+	                              Ver Perfil
+	                            </Button>
+	                            <Button onClick={() => handleContactViaEmail(player.email)} size="sm" className="gap-2">
+	                              <Mail className="h-4 w-4" /> Contactar
+	                            </Button>
+	                          </div>
 	                        </div>
-	                        <div className="flex flex-col gap-2">
-	                          <Button onClick={() => handleViewProfile(player.id)} variant="outline" size="sm">
-	                            Ver Perfil
-	                          </Button>
-                          <Button onClick={() => handleContactViaEmail(player.email)} size="sm" className="gap-2">
-                            <Mail className="h-4 w-4" /> Contactar
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-          )}
+	                      </CardContent>
+	                    </Card>
+	                  ))}
+	                </div>
+	              ) : (
+	                <Card>
+	                  <CardContent className="p-6 text-center text-muted-foreground">
+	                    Nenhum perfil falso de jogador esta a ser mostrado aqui.
+	                  </CardContent>
+	                </Card>
+	              )}
+	            </TabsContent>
+	          )}
 
           {user?.role === "treinador" && (
             <TabsContent value="candidaturas" className="space-y-6">
               <h2 className="text-2xl font-display font-bold">Candidaturas Recebidas</h2>
-              <div className="grid gap-4">
-                {receivedApplications.length > 0 ? (
-                  receivedApplications.map((app) => (
-                    <Card
-                      key={app.id}
-                      className={
-                        app.status === "aceite"
-                          ? "border-green-500"
-                          : app.status === "rejeitado"
-                            ? "border-red-500"
-                            : ""
-                      }
-                    >
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="mb-2 flex items-center gap-2">
-                              <h3 className="text-lg font-display font-bold">{app.name}</h3>
-                              <span
-                                className={`rounded px-2 py-1 text-xs font-bold ${
-                                  app.status === "aceite"
-                                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                    : app.status === "rejeitado"
-                                      ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                                      : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                                }`}
-                              >
-                                {app.status === "aceite"
-                                  ? "Aceite"
-                                  : app.status === "rejeitado"
-                                    ? "Rejeitado"
-                                    : "Pendente"}
-                              </span>
-                            </div>
-                            <div className="space-y-1 text-sm text-muted-foreground">
-                              <p>Desporto: <strong>{app.sport}</strong> | Posicao: <strong>{app.position}</strong></p>
-                              <p className="italic">"{app.message}"</p>
-                              <p>E-mail: <strong>{app.email}</strong></p>
-                            </div>
-                          </div>
-                          {app.status === "pendente" && (
-                            <div className="flex flex-col gap-2">
-                              <Button onClick={() => handleAcceptApplication(app.id)} size="sm" className="gap-2 bg-green-600 hover:bg-green-700">
-                                <Check className="h-4 w-4" /> Aceitar
-                              </Button>
-                              <Button onClick={() => handleRejectApplication(app.id)} size="sm" variant="outline" className="gap-2">
-                                <X className="h-4 w-4" /> Rejeitar
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <Card>
-                    <CardContent className="p-6 text-center text-muted-foreground">
-                      Nenhuma candidatura recebida.
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </TabsContent>
-          )}
+	              {receivedApplications.length > 0 ? (
+	                <div className="grid gap-4">
+	                  {receivedApplications.map((app) => (
+	                    <Card
+	                      key={app.id}
+	                      className={
+	                        app.status === "aceite"
+	                          ? "border-green-500"
+	                          : app.status === "rejeitado"
+	                            ? "border-red-500"
+	                            : ""
+	                      }
+	                    >
+	                      <CardContent className="p-6">
+	                        <div className="flex items-start justify-between">
+	                          <div className="flex-1">
+	                            <div className="mb-2 flex items-center gap-2">
+	                              <h3 className="text-lg font-display font-bold">{app.name}</h3>
+	                              <span
+	                                className={`rounded px-2 py-1 text-xs font-bold ${
+	                                  app.status === "aceite"
+	                                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+	                                    : app.status === "rejeitado"
+	                                      ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+	                                      : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+	                                }`}
+	                              >
+	                                {app.status === "aceite"
+	                                  ? "Aceite"
+	                                  : app.status === "rejeitado"
+	                                    ? "Rejeitado"
+	                                    : "Pendente"}
+	                              </span>
+	                            </div>
+	                            <div className="space-y-1 text-sm text-muted-foreground">
+	                              <p>
+	                                Desporto: <strong>{app.sport}</strong> | Posicao: <strong>{app.position}</strong>
+	                              </p>
+	                              <p className="italic">"{app.message}"</p>
+	                              <p>
+	                                E-mail: <strong>{app.email}</strong>
+	                              </p>
+	                            </div>
+	                          </div>
+	                          {app.status === "pendente" && (
+	                            <div className="flex flex-col gap-2">
+	                              <Button
+	                                onClick={() => handleAcceptApplication(app.id)}
+	                                size="sm"
+	                                className="gap-2 bg-green-600 hover:bg-green-700"
+	                              >
+	                                <Check className="h-4 w-4" /> Aceitar
+	                              </Button>
+	                              <Button
+	                                onClick={() => handleRejectApplication(app.id)}
+	                                size="sm"
+	                                variant="outline"
+	                                className="gap-2"
+	                              >
+	                                <X className="h-4 w-4" /> Rejeitar
+	                              </Button>
+	                            </div>
+	                          )}
+	                        </div>
+	                      </CardContent>
+	                    </Card>
+	                  ))}
+	                </div>
+	              ) : (
+	                <Card>
+	                  <CardContent className="p-6 text-center text-muted-foreground">
+	                    Nenhuma candidatura falsa esta a ser mostrada aqui.
+	                  </CardContent>
+	                </Card>
+	              )}
+	            </TabsContent>
+	          )}
 
           {user?.role === "atleta" && (
             <TabsContent value="candidaturas" className="space-y-6">
