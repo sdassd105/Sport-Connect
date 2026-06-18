@@ -2,6 +2,7 @@
 import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
+import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
@@ -646,6 +647,10 @@ var __filename = fileURLToPath(import.meta.url);
 var __dirname = path.dirname(__filename);
 function createApp() {
   const app2 = express();
+  app2.use(cors({
+    origin: "https://sport-connect-delta.vercel.app",
+    credentials: true
+  }));
   app2.use(express.json({ limit: "10mb" }));
   app2.get("/api/health", (_req, res) => {
     res.json({ ok: true });
