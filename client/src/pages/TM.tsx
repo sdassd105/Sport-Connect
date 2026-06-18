@@ -100,62 +100,9 @@ export default function TM() {
     description: "",
   });
 
-  const [playersSeekingTeams] = useState<Player[]>([
-    {
-      id: 1,
-      name: "Lucas 'Spider'",
-      sport: "Basquete",
-      position: "Armador",
-      level: "Avancado",
-      age: 22,
-      city: "Lisboa",
-      email: "lucas@email.com",
-      profilePhoto: null,
-    },
-    {
-      id: 2,
-      name: "Ana Volley",
-      sport: "Volei",
-      position: "Levantadora",
-      level: "Intermedio",
-      age: 26,
-      city: "Porto",
-      email: "ana@email.com",
-      profilePhoto: null,
-    },
-    {
-      id: 3,
-      name: "Marcos Gol",
-      sport: "Futebol",
-      position: "Guarda-redes",
-      level: "Profissional",
-      age: 29,
-      city: "Setubal",
-      email: "marcos@email.com",
-      profilePhoto: null,
-    },
-  ]);
+  const [playersSeekingTeams, setPlayersSeekingTeams] = useState<Player[]>([]);
 
-  const [receivedApplications, setReceivedApplications] = useState<Application[]>([
-    {
-      id: 1,
-      name: "Lucas 'Spider'",
-      sport: "Basquete",
-      position: "Armador",
-      message: "Gostaria de fazer um teste na equipa!",
-      status: "pendente",
-      email: "lucas@email.com",
-    },
-    {
-      id: 2,
-      name: "Marcos Gol",
-      sport: "Futebol",
-      position: "Guarda-redes",
-      message: "Tenho experiencia em torneios regionais.",
-      status: "pendente",
-      email: "marcos@email.com",
-    },
-  ]);
+  const [receivedApplications, setReceivedApplications] = useState<Application[]>([]);
 
   const [myApplications, setMyApplications] = useState<Application[]>([]);
 
