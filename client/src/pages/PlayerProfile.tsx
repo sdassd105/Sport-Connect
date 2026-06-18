@@ -167,64 +167,26 @@ export default function PlayerProfile() {
     };
   }, [authUser]);
 
-  const applications = [
-    {
-      id: 1,
-      name: "Lucas 'Spider'",
-      sport: "Basquete",
-      position: "Armador",
-      message: "Gostaria de fazer um teste na equipa!",
-    },
-    {
-      id: 2,
-      name: "Marcos Gol",
-      sport: "Futebol",
-      position: "Guarda-redes",
-      message: "Tenho experiencia em torneios regionais.",
-    },
-  ];
+  const applications: Array<{
+    id: number;
+    name: string;
+    sport: string;
+    position: string;
+    message: string;
+  }> = [];
 
-  const teamPlayers = [
-    {
-      id: 1,
-      name: "Joao Santos",
-      position: "Defesa Central",
-      sport: "Futebol",
-      age: 28,
-      status: "Ativo",
-      photo:
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
-      bio: "Defesa forte no jogo aereo, com boa leitura tática e liderança dentro de campo.",
-      experience: "8 anos",
-      preferredFoot: "Direito",
-    },
-    {
-      id: 2,
-      name: "Ana Costa",
-      position: "Ponta",
-      sport: "Volei",
-      age: 22,
-      status: "Ativo",
-      photo:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=240&q=80",
-      bio: "Ponta explosiva, forte no um contra um e com boa capacidade de finalizacao.",
-      experience: "5 anos",
-      preferredFoot: "Destro",
-    },
-    {
-      id: 3,
-      name: "Miguel Oliveira",
-      position: "Medio",
-      sport: "Futebol",
-      age: 26,
-      status: "Lesionado",
-      photo:
-        "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=240&q=80",
-      bio: "Medio organizador, bom passe longo e excelente controlo do ritmo de jogo.",
-      experience: "7 anos",
-      preferredFoot: "Esquerdo",
-    },
-  ];
+  const teamPlayers: Array<{
+    id: number;
+    name: string;
+    position: string;
+    sport: string;
+    age: number;
+    status: string;
+    photo: string;
+    bio: string;
+    experience: string;
+    preferredFoot: string;
+  }> = [];
 
   const handlePhotoClick = () => {
     if (isEditing) fileInputRef.current?.click();
@@ -603,76 +565,83 @@ export default function PlayerProfile() {
                   <CardTitle>Jogadores da Equipa</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {teamPlayers.map((player) => (
-                      <div key={player.id} className="rounded-lg border">
-                        <button
-                          type="button"
-                          onClick={() => toggleTeamPlayerDetails(player.id)}
-                          className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-muted/30"
-                        >
-                          <div className="flex items-center gap-4">
-                            <img
-                              src={player.photo}
-                              alt={player.name}
-                              className="h-14 w-14 rounded-full border-2 border-primary object-cover"
-                            />
-                            <div>
-                              <p className="font-semibold">{player.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {player.position} â€¢ {player.age} anos
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                Desporto: <span className="font-medium text-foreground">{player.sport}</span>
-                              </p>
+                  {teamPlayers.length > 0 ? (
+                    <div className="space-y-4">
+                      {teamPlayers.map((player) => (
+                        <div key={player.id} className="rounded-lg border">
+                          <button
+                            type="button"
+                            onClick={() => toggleTeamPlayerDetails(player.id)}
+                            className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-muted/30"
+                          >
+                            <div className="flex items-center gap-4">
+                              <img
+                                src={player.photo}
+                                alt={player.name}
+                                className="h-14 w-14 rounded-full border-2 border-primary object-cover"
+                              />
+                              <div>
+                                <p className="font-semibold">{player.name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {player.position} â€¢ {player.age} anos
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  Desporto:{" "}
+                                  <span className="font-medium text-foreground">{player.sport}</span>
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`rounded px-3 py-1 text-sm font-medium ${
-                                player.status === "Ativo"
-                                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                  : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                              }`}
-                            >
-                              {player.status}
-                            </span>
-                          </div>
-                        </button>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`rounded px-3 py-1 text-sm font-medium ${
+                                  player.status === "Ativo"
+                                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                    : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                                }`}
+                              >
+                                {player.status}
+                              </span>
+                            </div>
+                          </button>
 
-                        {selectedTeamPlayerId === player.id && (
-                          <div className="border-t bg-muted/20 p-4">
-                            <div className="grid gap-4 md:grid-cols-3">
-                              <div>
-                                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                                  Experiencia
-                                </p>
-                                <p className="mt-1 text-sm">{player.experience}</p>
+                          {selectedTeamPlayerId === player.id && (
+                            <div className="border-t bg-muted/20 p-4">
+                              <div className="grid gap-4 md:grid-cols-3">
+                                <div>
+                                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                                    Experiencia
+                                  </p>
+                                  <p className="mt-1 text-sm">{player.experience}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                                    Pe Preferido
+                                  </p>
+                                  <p className="mt-1 text-sm">{player.preferredFoot}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                                    Estado
+                                  </p>
+                                  <p className="mt-1 text-sm">{player.status}</p>
+                                </div>
                               </div>
-                              <div>
+                              <div className="mt-4">
                                 <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                                  Pe Preferido
+                                  Perfil do Jogador
                                 </p>
-                                <p className="mt-1 text-sm">{player.preferredFoot}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                                  Estado
-                                </p>
-                                <p className="mt-1 text-sm">{player.status}</p>
+                                <p className="mt-1 text-sm text-muted-foreground">{player.bio}</p>
                               </div>
                             </div>
-                            <div className="mt-4">
-                              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                                Perfil do Jogador
-                              </p>
-                              <p className="mt-1 text-sm text-muted-foreground">{player.bio}</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground">
+                      Nenhum jogador falso ou exemplo esta a ser mostrado aqui.
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -686,29 +655,35 @@ export default function PlayerProfile() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {applications.map((app) => (
-                    <div key={app.id} className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="flex-1">
-                        <p className="font-semibold">{app.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {app.sport} â€¢ {app.position}
-                        </p>
-                        <p className="mt-2 text-sm">"{app.message}"</p>
-                      </div>
-                      {authUser?.role === "treinador" && (
-                        <div className="flex gap-2">
-                          <Button size="sm" className="gap-1">
-                            <Check className="h-4 w-4" /> Aceitar
-                          </Button>
-                          <Button size="sm" variant="outline" className="gap-1">
-                            <X className="h-4 w-4" /> Rejeitar
-                          </Button>
+                {applications.length > 0 ? (
+                  <div className="space-y-4">
+                    {applications.map((app) => (
+                      <div key={app.id} className="flex items-center justify-between rounded-lg border p-4">
+                        <div className="flex-1">
+                          <p className="font-semibold">{app.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {app.sport} â€¢ {app.position}
+                          </p>
+                          <p className="mt-2 text-sm">"{app.message}"</p>
                         </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                        {authUser?.role === "treinador" && (
+                          <div className="flex gap-2">
+                            <Button size="sm" className="gap-1">
+                              <Check className="h-4 w-4" /> Aceitar
+                            </Button>
+                            <Button size="sm" variant="outline" className="gap-1">
+                              <X className="h-4 w-4" /> Rejeitar
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground">
+                    Sem candidaturas falsas ou de exemplo para mostrar.
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
