@@ -12,6 +12,7 @@ import { saveNewsArticle } from "./db";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const newsApiKey = process.env.NEWSAPI_KEY;
 
 export function createApp() {
   const app = express();
