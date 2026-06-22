@@ -1,4 +1,4 @@
-﻿import Layout from "@/components/Layout";
+import Layout from "@/components/Layout";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -583,7 +583,7 @@ export default function PlayerProfile() {
                               <div>
                                 <p className="font-semibold">{player.name}</p>
                                 <p className="text-sm text-muted-foreground">
-                                  {player.position} â€¢ {player.age} anos
+                                  {player.position} • {player.age} anos
                                 </p>
                                 <p className="text-sm text-muted-foreground">
                                   Desporto:{" "}
@@ -662,7 +662,7 @@ export default function PlayerProfile() {
                         <div className="flex-1">
                           <p className="font-semibold">{app.name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {app.sport} â€¢ {app.position}
+                            {app.sport} • {app.position}
                           </p>
                           <p className="mt-2 text-sm">"{app.message}"</p>
                         </div>

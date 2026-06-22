@@ -169,7 +169,7 @@ export default function Home() {
           <div className="mb-8 flex items-center gap-2">
             <Zap className="animate-pulse text-primary" />
             <h2 className="font-display text-2xl font-bold uppercase tracking-widest text-primary">
-              Transmissao ao Vivo
+              Noticias
             </h2>
           </div>
 
