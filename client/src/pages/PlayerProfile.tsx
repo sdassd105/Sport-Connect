@@ -3,7 +3,13 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {`r`n  Camera,`r`n  Check,`r`n  Edit2,`r`n  Save,`r`n  X,`r`n} from "lucide-react";
+import {
+  Camera,
+  Check,
+  Edit2,
+  Save,
+  X,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
