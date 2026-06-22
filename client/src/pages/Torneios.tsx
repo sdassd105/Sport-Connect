@@ -427,7 +427,7 @@ export default function Torneios() {
                   Queres organizar um torneio oficial?
                 </h3>
                 <p className="text-muted-foreground">
-                  Treinadores verificados podem criar e gerir torneios diretamente pela plataforma.
+                  Treinadores podem criar e gerir torneios diretamente pela plataforma.
                 </p>
               </div>
               <div className="flex gap-4 text-sm text-muted-foreground">
@@ -435,7 +435,7 @@ export default function Torneios() {
                   <Clock className="h-4 w-4" /> Apoio 24h
                 </div>
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4" /> Verificacao
+                  <Users className="h-4 w-4" /> Gestao simples
                 </div>
               </div>
             </div>
