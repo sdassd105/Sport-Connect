@@ -3,15 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  AlertCircle,
-  Camera,
-  Check,
-  Edit2,
-  Save,
-  ShieldCheck,
-  X,
-} from "lucide-react";
+import {`r`n  Camera,`r`n  Check,`r`n  Edit2,`r`n  Save,`r`n  X,`r`n} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -28,7 +20,6 @@ type FormState = {
   specialty: string;
   bio: string;
   teamManaged: string;
-  trainerCertification: string;
 };
 
 function blobToDataUrl(blob: Blob): Promise<string> {
@@ -118,7 +109,6 @@ export default function PlayerProfile() {
     specialty: "",
     bio: "",
     teamManaged: "",
-    trainerCertification: authUser?.trainerCertification || "",
   });
 
   useEffect(() => {
@@ -262,7 +252,6 @@ export default function PlayerProfile() {
         email: updatedUser.email ?? formData.email,
         profilePhoto: updatedUser.profilePhoto ?? formData.profilePhoto,
         bio: formData.bio,
-        trainerCertification: formData.trainerCertification,
       });
 
       setIsEditing(false);
@@ -321,9 +310,6 @@ export default function PlayerProfile() {
           <div className="flex-1">
             <div className="mb-2 flex items-center gap-2">
               <h1 className="text-4xl font-display font-bold">{formData.name || "Seu Nome"}</h1>
-              {authUser?.role === "treinador" && authUser?.trainerVerified && (
-                <ShieldCheck className="h-8 w-8 text-green-500" />
-              )}
             </div>
             <p className="mb-4 text-muted-foreground">{formData.email}</p>
             <div className="flex gap-2">
@@ -513,31 +499,6 @@ export default function PlayerProfile() {
                           placeholder="Ainda nao persistido na base"
                           className="mt-1 w-full rounded border bg-background p-2 disabled:opacity-50"
                         />
-                      </div>
-                    </div>
-
-                    <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
-                      <div className="flex items-start gap-2">
-                        <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600 dark:text-yellow-500" />
-                        <div className="flex-1">
-                          <h4 className="mb-2 font-semibold text-yellow-900 dark:text-yellow-200">
-                            Verificacao de Treinador
-                          </h4>
-                          <p className="mb-3 text-sm text-yellow-800 dark:text-yellow-300">
-                            O que ja fica guardado na base e nome, e-mail, foto, desporto, anos de
-                            experiencia e bio. Os campos de equipa e certificacao ainda nao estao
-                            persistidos na base atual.
-                          </p>
-                          <input
-                            type="text"
-                            name="trainerCertification"
-                            value={formData.trainerCertification}
-                            onChange={handleChange}
-                            disabled
-                            placeholder="Ainda nao persistido na base"
-                            className="w-full rounded border bg-background p-2 text-sm disabled:opacity-50"
-                          />
-                        </div>
                       </div>
                     </div>
                   </>
