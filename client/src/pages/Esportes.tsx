@@ -17,10 +17,8 @@ import {
 interface Location {
   id: number;
   name: string;
-  sport: "futebol" | "basquete" | "volei";
-  address: string;
   city: string;
-  distance: string;
+  modalities: string;
 }
 
 interface AmateurGame {
@@ -44,7 +42,62 @@ export default function Esportes() {
   const [userConfirmations, setUserConfirmations] = useState<Record<number, boolean>>({});
 
   const [tournaments, setTournaments] = useState<StoredTournament[]>([]);
-  const locations: Location[] = [];
+  const locations: Location[] = [
+    {
+      id: 1,
+      name: "Pavilhao Multidesportos Dr. Mario Mexia",
+      city: "Coimbra",
+      modalities: "Basquetebol e Ginastica",
+    },
+    {
+      id: 2,
+      name: "Pavilhao Desportivo Municipal da Povoa de Varzim",
+      city: "Povoa de Varzim",
+      modalities: "Futsal e Andebol",
+    },
+    {
+      id: 3,
+      name: "Pavilhao Desportivo Municipal de Sines",
+      city: "Sines",
+      modalities: "Futsal (acolhe muitas fases finais)",
+    },
+    {
+      id: 4,
+      name: "Pavilhao Carlos Lopes",
+      city: "Lisboa",
+      modalities: "Atletismo e eventos corporativos",
+    },
+    {
+      id: 5,
+      name: "Pavilhao das Goladas",
+      city: "Braga",
+      modalities: "Hoquei em Patins (HC Braga)",
+    },
+    {
+      id: 6,
+      name: "Pavilhao Municipal de Barcelos",
+      city: "Barcelos",
+      modalities: "Hoquei em Patins e Futsal",
+    },
+    {
+      id: 7,
+      name: "Pavilhao dos Barreiros",
+      city: "Funchal, Madeira",
+      modalities: "Varias modalidades regionais",
+    },
+    {
+      id: 8,
+      name: "Pavilhao do Arade",
+      city: "Portimao, Algarve",
+      modalities: "Eventos e desportos indoor",
+    },
+    {
+      id: 9,
+      name: "Pavilhao Gimnodesportivo de Sesimbra",
+      city: "Sesimbra",
+      modalities: "Hoquei em Patins e Patinagem",
+    },
+  ];
   const [amateurGames, setAmateurGames] = useState<AmateurGame[]>([]);
   const [isLoadingAmateurGames, setIsLoadingAmateurGames] = useState(false);
   const [isSavingAmateurGame, setIsSavingAmateurGame] = useState(false);
@@ -114,7 +167,7 @@ export default function Esportes() {
   }, [selectedSport, user?.id, user?.name]);
 
   const filteredTournaments = tournaments.filter((t) => t.sport === selectedSport);
-  const filteredLocations = locations.filter((l) => l.sport === selectedSport);
+  const filteredLocations = locations;
   const filteredAmateurGames = amateurGames.filter((g) => g.sport === selectedSport);
 
   const handleCreateTournament = () => {
@@ -361,12 +414,11 @@ export default function Esportes() {
                           <h3 className="mb-2 text-lg font-display font-bold">{location.name}</h3>
                           <div className="space-y-2 text-sm text-muted-foreground">
                             <div className="flex items-center gap-2">
-                              <MapPin className="h-4 w-4" /> {location.address}
+                              <MapPin className="h-4 w-4" /> {location.city}
                             </div>
                             <div className="flex items-center gap-2">
-                              <Trophy className="h-4 w-4" /> {location.city}
+                              <Trophy className="h-4 w-4" /> {location.modalities}
                             </div>
-                            <div className="text-xs">Distancia: {location.distance}</div>
                           </div>
                         </div>
                       </div>
