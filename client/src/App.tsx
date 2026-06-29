@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { Toaster } from "@/components/ui/sonner";
@@ -15,6 +15,34 @@ const Times = lazy(() => import("./pages/Times"));
 const TM = lazy(() => import("./pages/TM"));
 const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
 
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-6">
+      <div className="flex flex-col items-center gap-6 text-center">
+        <div className="relative h-28 w-28 overflow-hidden rounded-full border-4 border-primary shadow-[0_0_40px_rgba(204,255,0,0.28)]">
+          <img
+            src="/images/hero-main.jpg"
+            alt="Sport Connect"
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-background/25" />
+        </div>
+        <div>
+          <h1 className="text-5xl leading-none text-primary sm:text-6xl">
+            Sport Connect
+          </h1>
+          <p className="mt-2 text-sm uppercase tracking-[0.28em] text-muted-foreground">
+            A carregar
+          </p>
+        </div>
+        <div className="h-1 w-40 overflow-hidden rounded-full bg-muted">
+          <div className="h-full w-1/2 animate-pulse bg-primary" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, isLoading } = useAuth();
   const [location, setLocation] = useLocation();
@@ -26,7 +54,7 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   }, [isAuthenticated, isLoading, location, setLocation]);
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">A carregar...</div>;
+    return <LoadingScreen />;
   }
 
   if (!isAuthenticated && location !== "/auth") {
@@ -60,6 +88,26 @@ function Router() {
 }
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setShowSplash(false);
+    }, 1800);
+
+    return () => window.clearTimeout(timeout);
+  }, []);
+
+  if (showSplash) {
+    return (
+      <ErrorBoundary>
+        <ThemeProvider defaultTheme="dark">
+          <LoadingScreen />
+        </ThemeProvider>
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark">
@@ -67,7 +115,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Suspense
-              fallback={<div className="min-h-screen flex items-center justify-center">A carregar...</div>}
+              fallback={<LoadingScreen />}
             >
               <Router />
             </Suspense>
